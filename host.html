@@ -1,0 +1,39 @@
+<!-- host.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Answer - Host</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>Host View</h1>
+  <p id="room-code"></p>
+
+  <h2>Fastest Answer</h2>
+  <div id="winner" class="winner-box">Waiting...</div>
+
+  <button onclick="resetBuzz()">Reset Round</button>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    document.getElementById('room-code').textContent = `Room: ${room}`;
+
+    const buzzRef = firebase.database().ref(`rooms/${room}/buzz`);
+
+    buzzRef.on('value', (snapshot) => {
+      const val = snapshot.val();
+      document.getElementById('winner').textContent = val ? val.name : 'Waiting...';
+    });
+
+    function resetBuzz() {
+      buzzRef.set(null);
+    }
+  </script>
+</body>
+</html>
