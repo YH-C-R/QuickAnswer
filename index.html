@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Answer - Home</title>
+  <title>Quick Answer</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -14,8 +14,6 @@
     <h2>Create Room</h2>
     <input type="text" id="hoster-name" placeholder="Host Name" maxlength="20" />
     <button onclick="createRoom()">Create Room</button>
-    <p id="created-room"></p>
-    <a id="host-link" href="#" style="display:none">Go to Host Page</a>
   </div>
 
   <div class="section">
@@ -23,7 +21,6 @@
     <input type="text" id="join-room" placeholder="Room Code" maxlength="10" />
     <input type="text" id="player-name" placeholder="Your Name" maxlength="20" />
     <button onclick="joinRoom()">Join</button>
-    <p id="join-status"></p>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -31,28 +28,38 @@
   <script src="app.js"></script>
   <script>
     function createRoom() {
+      console.log('createRoom!!');
       const hostName = document.getElementById('hoster-name').value.trim();
       if (!hostName) {
         alert('Please enter a host name!');
         return;
       }
-      const code = Math.random().toString(36).substring(2, 6).toUpperCase();
-      firebase.database().ref(`rooms/${code}`).set({ createdAt: Date.now(), buzz: null });
-      document.getElementById('created-room').textContent = `Room Code: ${code}`;
-      const link = document.getElementById('host-link');
-      link.href = `host.html?room=${code}`;
-      link.style.display = 'inline';
+      
+      const room_key = Math.random().toString(36).substring(2, 6).toUpperCase();
+      firebase.database().ref(`rooms/${room_key}`).set({
+          host: hostName,
+          createdAt: Date.now(),
+          buzz: null })
+        .then(() => {
+          console.log('Room created successfully');
+          setTimeout(() => {
+            window.location.href = `room.html?room=${room_key}&host=${hostName}`;
+          }, 300);
+        })
+        .catch((error) => {
+          alert('Fail to create room!');
+          console.error('Failed to create room:', error);
+        });
     }
 
     function joinRoom() {
-      const room = document.getElementById('join-room').value.toUpperCase();
+      const room_key = document.getElementById('join-room').value.toUpperCase();
       const name = document.getElementById('player-name').value;
-      if (!room || !name) return alert('Enter both room code and name');
-      firebase.database().ref(`rooms/${room}/players/${name}`).set(true);
-      document.getElementById('join-status').textContent = 'Joined! Redirecting...';
+      if (!room_key || !name) return alert('Enter both room code and name');
+      firebase.database().ref(`rooms/${room_key}/players/${name}`).set(true);
       setTimeout(() => {
-        window.location.href = `player.html?room=${room}&name=${name}`;
-      }, 1000);
+        window.location.href = `room.html?room=${room_key}`;
+      }, 300);
     }
   </script>
 </body>
