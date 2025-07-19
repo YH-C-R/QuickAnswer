@@ -1,85 +1,104 @@
 <!-- host.html -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quick Answer</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <!-- Room Info -->
-  <div class="room-header">
-    <h1 class="room-name" id="room-name"></h1>
-    <span class="room-code" id="room-code"></span>
-  </div>
-
-  <!-- Attender -->
-  <div class="attenders-section" id="attenders-list">
-    <div class="attender-card host">
-      <div class="attender-name">Alice</div>
-      <div class="attender-badge">Host</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quick Answer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Room Info -->
+    <div class="room-header">
+      <h1 class="room-name" id="room-name"></h1>
+      <span class="room-code" id="room-code"></span>
     </div>
-    <div class="attender-card">
-      <div class="attender-name">Bob</div>
-      <div class="attender-badge">Player</div>
+
+    <!-- Attender -->
+    <div class="attenders-section" id="attenders-list"></div>
+
+    <!-- Playing part -->
+    <div class="status-container">
+      <div class="status-section status-waiting" id="game-status">Waiting for players...</div>
+
+      <div id="spinner" style="display: none">
+        <div class="status-section status-waiting">Waiting for result...</div>
+        <div class="loader"></div>
+      </div>
+
+      <div class="buttons-section">
+        <button class="game-btn" id="player-action-btn" disabled>Press!</button>
+      </div>
+
+      <div class="winner-box" id="winner" style="display: none">
+        <div class="result-text">
+          🎉 WINNER IS <span id="winner-name" style="color: #ecb911; font-weight: bold"></span> 🎉
+        </div>
+      </div>
     </div>
-    <div class="attender-card">
-      <div class="attender-name">Charlie</div>
-      <div class="attender-badge">Player</div>
-    </div>
-  </div>
 
-  <div class="status-container">
-    <div class="status-section status-waiting" id="game-status">
-      Waiting for players...
-    </div>
-    <div class="buttons-section">
-    <button class="game-btn" id="player-action-btn" disabled>Press!</button>
-    </div>
-  </div>
+    <!-- 4 & 5. Buttons -->
+    <button class="game-btn host-btn" id="start-button" style="display: none" onclick="startGame()">
+      Start
+    </button>
 
-  <!-- Playing part -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="app.js"></script>
+    <script src="firebaseUtils.js"></script>
+    <script src="room.js"></script>
+    <script>
+      // get from URL
+      const params = new URLSearchParams(window.location.search);
 
+      const attendersList = document.getElementById("attenders-list");
+      const playerCards = {}; // key: playerID, value: card element
+      attendersList.textContent = "loading...";
 
-  <!-- 4 & 5. Buttons -->
-  <button class="game-btn host-btn" id="start-button" style="display:none;" onclick="resetBuzz()">Start</button>
-  
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="app.js"></script>
-  <script>
-     // get from URL
-    const params = new URLSearchParams(window.location.search);
-    const room = params.get('room');
-    const host = params.get('host'); // this will be null for players
+      const room = params.get("room");
+      const host = params.get("host");
+      const player = params.get("player");
+      const isHost = host === player;
 
-    firebase.database().ref(`rooms/${room}/host`)
-      .once('value')
-      .then((snapshot) => { 
-        const host_name = snapshot.val();
-        if (host && host == host_name) {
-          document.getElementById('start-button').style.display = 'block';
+      document.getElementById("room-name").textContent = `${host}'s Room`;
+      document.getElementById("room-code").textContent = `Room key: ${room}`;
+
+      loadAttenders(room, host);
+
+      const statusDiv = document.getElementById("game-status");
+      const pressBtn = document.getElementById("player-action-btn");
+      pressBtn.onclick = function () {
+        recordPlayer(player);
+        document.getElementById("spinner").style.display = "block";
+        statusDiv.style.display = "none";
+        pressBtn.style.display = "none";
+
+        // Keep spinner for 3 seconds, then show winner/result
+        setTimeout(() => {
+          getData(path(KEY_ROOM, room, KEY_RESULT)).then((snapshot) => {
+            const winner = snapshot.val().name;
+            document.getElementById("spinner").style.display = "none";
+            document.getElementById("winner-name").textContent = snapshot.val().name;
+            document.getElementById("winner").style.display = "block";
+            if (isHost) {
+              document.getElementById("start-button").style.display = "block";
+            }
+          });
+        }, 1000);
+      };
+
+      listenData(path(KEY_ROOM, room, KEY_START), (snapshot) => {
+        const startAt = snapshot.val();
+        if (startAt > 0) {
+          startCounting(startAt, () => {
+            statusDiv.textContent = "GO!";
+            pressBtn.disabled = false;
+          });
         }
-        document.getElementById('room-name').textContent = `${host_name}'s Room`;
-      })
-      .catch(err => {
-        console.error('Error reading host from DB:', err);
-        document.getElementById('start-button').style.display = 'none';
       });
-
-      document.getElementById('room-code').textContent = `Room key: ${room}`;
-
-    const buzzRef = firebase.database().ref(`rooms/${room}/buzz`);
-
-    buzzRef.on('value', (snapshot) => {
-      const val = snapshot.val();
-      document.getElementById('winner').textContent = val ? val.name : 'Waiting...';
-    });
-
-    function resetBuzz() {
-      buzzRef.set(null);
-    }
-  </script>
-</body>
+      if (isHost) {
+        document.getElementById("start-button").style.display = "block";
+      }
+    </script>
+  </body>
 </html>
