@@ -12,3 +12,26 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+// UI Utils
+const UI = {
+  show: function (item) {
+    item.style.display = "block";
+  },
+
+  hide: function (item) {
+    item.style.display = "none";
+  },
+
+  setText: function (item, text) {
+    item.textContent = text;
+  },
+
+  disable: function (item) {
+    item.disabled = true;
+  },
+
+  enable: function (item) {
+    item.disabled = false;
+  },
+};

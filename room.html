@@ -53,6 +53,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="app.js"></script>
     <script src="firebaseUtils.js"></script>
+    <script src="game.js"></script>
     <script src="room.js"></script>
     <script>
       // get from URL
@@ -68,17 +69,12 @@
 
       RoomPage.init(room, host, isHost);
 
+      function hostStart() {}
+
       function playerHit() {
-        RoomPage.savePlayerTime(player);
+        Game.savePlayerTime(player);
         RoomPage.waitResult();
       }
-
-      listenData(path(KEY_ROOM, room, KEY_START), (snapshot) => {
-        const startAt = snapshot.val();
-        if (startAt > 0) {
-          RoomPage.startCounting(startAt);
-        }
-      });
     </script>
   </body>
 </html>
