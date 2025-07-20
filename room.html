@@ -27,7 +27,9 @@
       </div>
 
       <div class="buttons-section">
-        <button class="game-btn" id="player-action-btn" disabled>Press!</button>
+        <button class="game-btn" id="player-action-btn" onclick="playerHit()" disabled>
+          Press!
+        </button>
       </div>
 
       <div class="winner-box" id="winner" style="display: none">
@@ -38,7 +40,12 @@
     </div>
 
     <!-- 4 & 5. Buttons -->
-    <button class="game-btn host-btn" id="start-button" style="display: none" onclick="startGame()">
+    <button
+      class="game-btn host-btn"
+      id="start-button"
+      style="display: none"
+      onclick="RoomPage.startGame()"
+    >
       Start
     </button>
 
@@ -51,10 +58,6 @@
       // get from URL
       const params = new URLSearchParams(window.location.search);
 
-      const attendersList = document.getElementById("attenders-list");
-      const playerCards = {}; // key: playerID, value: card element
-      attendersList.textContent = "loading...";
-
       const room = params.get("room");
       const host = params.get("host");
       const player = params.get("player");
@@ -63,42 +66,19 @@
       document.getElementById("room-name").textContent = `${host}'s Room`;
       document.getElementById("room-code").textContent = `Room key: ${room}`;
 
-      loadAttenders(room, host);
+      RoomPage.init(room, host, isHost);
 
-      const statusDiv = document.getElementById("game-status");
-      const pressBtn = document.getElementById("player-action-btn");
-      pressBtn.onclick = function () {
-        recordPlayer(player);
-        document.getElementById("spinner").style.display = "block";
-        statusDiv.style.display = "none";
-        pressBtn.style.display = "none";
-
-        // Keep spinner for 3 seconds, then show winner/result
-        setTimeout(() => {
-          getData(path(KEY_ROOM, room, KEY_RESULT)).then((snapshot) => {
-            const winner = snapshot.val().name;
-            document.getElementById("spinner").style.display = "none";
-            document.getElementById("winner-name").textContent = snapshot.val().name;
-            document.getElementById("winner").style.display = "block";
-            if (isHost) {
-              document.getElementById("start-button").style.display = "block";
-            }
-          });
-        }, 1000);
-      };
+      function playerHit() {
+        RoomPage.savePlayerTime(player);
+        RoomPage.waitResult();
+      }
 
       listenData(path(KEY_ROOM, room, KEY_START), (snapshot) => {
         const startAt = snapshot.val();
         if (startAt > 0) {
-          startCounting(startAt, () => {
-            statusDiv.textContent = "GO!";
-            pressBtn.disabled = false;
-          });
+          RoomPage.startCounting(startAt);
         }
       });
-      if (isHost) {
-        document.getElementById("start-button").style.display = "block";
-      }
     </script>
   </body>
 </html>
