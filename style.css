@@ -52,17 +52,6 @@ button:hover {
   background-color: #3367d6;
 }
 
-.buzz-button {
-  font-size: 28px;
-  padding: 20px 40px;
-  background-color: #f44336;
-}
-
-.buzz-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
 .winner-box {
   font-size: 24px;
   font-weight: bold;
@@ -96,16 +85,16 @@ button:hover {
   margin-bottom: 18px;
 }
 
-.room-title {
+.room-name {
   font-size: 2rem;
   font-weight: bold;
   margin-bottom: 6px;
   text-align: center;
 }
 
-.room-key {
+.room-code {
   background: #f0f4fa;
-  color: #4f8cff;
+  color: #60769e;
   font-size: 1.1rem;
   border-radius: 6px;
   padding: 4px 14px;
@@ -143,21 +132,6 @@ button:hover {
 .attender-card:hover {
   transform: scale(1.07);
   box-shadow: 0 4px 16px rgba(44, 62, 80, 0.16);
-}
-
-.attender-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #4f8cff, #43b581);
-  color: #fff;
-  font-size: 1.3rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.08);
 }
 
 .attender-name {
@@ -257,7 +231,7 @@ button:hover {
   .room-container {
     padding: 18px 8px;
   }
-  .room-title {
+  .room-name {
     font-size: 1.2rem;
   }
   .game-btn,

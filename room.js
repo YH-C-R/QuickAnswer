@@ -1,63 +1,10 @@
-window.Room = {
-  create: function () {
-    console.log("createRoom!!");
-    const hostName = document.getElementById("hoster-name").value.trim();
-    if (!hostName) {
-      alert("Please enter a host name!");
-      return;
-    }
-
-    const room_key = Math.random().toString(36).substring(2, 6).toUpperCase();
-    getRef(path(KEY_ROOM, room_key))
-      .set({
-        host: hostName,
-        createdAt: Date.now(),
-        start: false,
-      })
-      .then(() => {
-        console.log("Room created successfully");
-        getRef(path(KEY_ROOM, room_key, KEY_PLAYER, hostName)).set(true);
-        setTimeout(() => {
-          window.location.href = `room.html?room=${room_key}&host=${hostName}&player=${hostName}`;
-        }, 300);
-      })
-      .catch((error) => {
-        alert("Fail to create room! " + error);
-      });
-  },
-
-  join: function () {
-    const room_key = document.getElementById("join-room").value.toUpperCase();
-    const name = document.getElementById("player-name").value;
-    if (!room_key || !name) return alert("Enter both room code and name");
-
-    getData(path(KEY_ROOM, room_key, KEY_PLAYER, name)).then((snapshot) => {
-      if (snapshot.exists()) {
-        alert("That name is already taken in this room!");
-        // Just return, DO NOT proceed
-        return;
-      }
-      getData(path(KEY_ROOM, room_key, KEY_HOST))
-        .then((snapshot) => {
-          if (!snapshot.exists()) {
-            alert("Room does not exist!");
-            return;
-          }
-
-          const hostName = snapshot.val();
-          getRef(path(KEY_ROOM, room_key, KEY_PLAYER, name)).set(true);
-          setTimeout(() => {
-            window.location.href = `room.html?room=${room_key}&host=${hostName}&player=${name}`;
-          }, 300);
-        })
-        .catch((error) => {
-          alert("cannot access host room. error:" + error);
-        });
-    });
-  },
-};
+ROLE_HOST = "host";
+ROLE_PLAYER = "player";
 
 const RoomPage = {
+  room: null, // 新增
+  host: null,
+  isHost: false,
   statusDiv: document.getElementById("game-status"),
   playerBtn: document.getElementById("player-action-btn"),
   winnerBox: document.getElementById("winner"),
@@ -67,18 +14,32 @@ const RoomPage = {
   attenders: document.getElementById("attenders-list"),
 
   init: function (room, host, isHost) {
+    this.room = room;
+    this.host = host;
+    this.isHost = isHost;
     this.loadAttenders(room, host);
     if (isHost) {
       UI.show(this.startButton);
     }
+
+    listenData(path(KEY_ROOM, room, KEY_START), (snapshot) => {
+      if (!snapshot.val()) {
+        console.log("not really start");
+        return;
+      }
+      const startAt = snapshot.val();
+      if (startAt > 0) {
+        this.startCounting(startAt);
+      }
+    });
   },
 
   createAttenderCard: function (name, role) {
     const card = document.createElement("div");
     card.className = "attender-card";
 
-    if (role === "Host") {
-      card.classList.add("host");
+    if (role === ROLE_HOST) {
+      card.classList.add(ROLE_HOST);
     }
 
     const nameDiv = document.createElement("div");
@@ -98,24 +59,24 @@ const RoomPage = {
   loadAttenders: function (room, host) {
     const playerCards = {}; // key: player, value: card element
     const attenderUI = this.attenders;
-    attenderUI.textContent = "loading...";
+
+    const card = this.createAttenderCard(host, ROLE_HOST);
+    playerCards[host] = card;
+    attenderUI.appendChild(card);
 
     listenData_child(path(KEY_ROOM, room, KEY_PLAYER), (type, snapshot) => {
+      if (!snapshot.val()) {
+        console.log("fail to get player");
+        return;
+      }
       const playerName = snapshot.key;
       if (type == EVENT_ADD) {
-        if (Object.keys(playerCards).length === 0) {
-          attenderUI.textContent = "";
-
-          const card = this.createAttenderCard(host, "Host");
-          playerCards[host] = card;
-          attenderUI.appendChild(card);
-        }
         if (!playerCards[playerName]) {
-          const card = this.createAttenderCard(playerName, "Player");
+          const card = this.createAttenderCard(playerName, ROLE_PLAYER);
           playerCards[playerName] = card;
           attenderUI.appendChild(card);
         }
-      } else if (EVENT_REMOVE) {
+      } else if (type == EVENT_REMOVE) {
         const card = playerCards[playerName];
         attenderUI.removeChild(playerCards[playerName]);
         delete playerCards[playerName];
@@ -124,46 +85,35 @@ const RoomPage = {
   },
 
   startGame: function () {
-    remove(path(KEY_ROOM, room, KEY_RESULT));
-    const startTimestamp = Date.now() + 3000;
-    getRef(path(KEY_ROOM, room, KEY_START))
-      .set(startTimestamp)
-      .catch((e) => alert("Set error: " + e));
+    Game.start(this.room);
     UI.hide(this.startButton);
   },
 
   startCounting: function (startTime) {
     UI.hide(this.winnerBox);
 
-    this.statusDiv.textContent = 3;
-    UI.show(this.statusDiv);
+    const statusUI = this.statusDiv;
+    UI.setText(statusUI, 3);
+    UI.show(statusUI);
 
-    this.playerBtn.disabled = true;
-    UI.show(this.playerBtn);
+    const playerPressBtn = this.playerBtn;
+    UI.disable(playerPressBtn);
+    UI.show(playerPressBtn);
 
     setTimeout(() => {
       const interval = setInterval(() => {
         const now = Date.now();
         const secondsLeft = Math.ceil((startTime - now) / 1000);
         if (secondsLeft > 0) {
-          this.statusDiv.textContent = secondsLeft;
+          UI.setText(statusUI, secondsLeft);
         } else {
           clearInterval(interval);
           getRef(path(KEY_ROOM, room, KEY_START)).set(-1);
-          this.statusDiv.textContent = "GO!";
-          this.playerBtn.disabled = false;
+          UI.setText(statusUI, "GO!");
+          UI.enable(playerPressBtn);
         }
       }, 100);
     }, 100); /* ... */
-  },
-
-  savePlayerTime: function (player) {
-    getRef(path(KEY_ROOM, room, KEY_RESULT)).transaction((current) => {
-      if (current === null) {
-        return { name: player, time: Date.now() };
-      }
-      return; // If already set, do nothing
-    });
   },
 
   waitResult: function () {
@@ -171,31 +121,26 @@ const RoomPage = {
     UI.hide(this.statusDiv);
     UI.hide(this.playerBtn);
 
-    // Keep spinner for 3 seconds, then show winner/result
+    // Keep spinner for 1 seconds, then show winner/result
     setTimeout(() => {
-      RoomPage.showWinner(room, isHost);
+      RoomPage.showWinner(this.room).then(() => {
+        if (this.isHost) {
+          UI.show(this.startButton);
+        }
+      });
     }, 1000);
   },
 
-  showWinner: function (room, isHost) {
-    getData(path(KEY_ROOM, room, KEY_RESULT)).then((snapshot) => {
+  showWinner: function (room) {
+    return getData(path(KEY_ROOM, room, KEY_RESULT)).then((snapshot) => {
+      if (!snapshot.val()) {
+        console.log("fail to get result");
+        return;
+      }
       const winner = snapshot.val().name;
       UI.hide(this.resultSpinner);
-      this.winnerName.textContent = snapshot.val().name;
+      UI.setText(this.winnerName, winner);
       UI.show(this.winnerBox);
-      if (isHost) {
-        UI.show(this.startButton);
-      }
     });
-  },
-};
-
-const UI = {
-  show: function (item) {
-    item.style.display = "block";
-  },
-
-  hide: function (item) {
-    item.style.display = "none";
   },
 };

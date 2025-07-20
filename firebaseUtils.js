@@ -1,3 +1,4 @@
+// ========== CONSTANTS ========== //
 const KEY_ROOM = "rooms";
 const KEY_PLAYER = "players";
 const KEY_HOST = "host";
@@ -11,17 +12,19 @@ const EVENT_ADD = "add";
 const EVENT_REMOVE = "remove";
 const EVENT_CHANGE = "change";
 
-// for set/update/remove
+// ========== UTILITY FUNCTIONS ========== //
+
+// set/update/remove data
 function getRef(path) {
   return firebase.database().ref(path);
 }
 
-// for data info
+// get data info
 function getData(path) {
   return getRef(path).once("value");
 }
 
-// for data info
+// listen data's child event
 function listenData_child(path, callback) {
   const ref = getRef(path);
   ref.on("child_added", (snapshot) => {
@@ -33,7 +36,7 @@ function listenData_child(path, callback) {
   });
 }
 
-// for data info
+// listen data's change
 function listenData(path, callback) {
   const ref = getRef(path);
   ref.on("value", (snapshot) => {
