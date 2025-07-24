@@ -13,10 +13,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-//   firebase.database().useEmulator("127.0.0.1", 9000);
-// }
-
 // UI Utils
 const UI = {
   show: function (item) {

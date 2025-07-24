@@ -77,9 +77,13 @@ const RoomPage = {
           attenderUI.appendChild(card);
         }
       } else if (type == EVENT_REMOVE) {
-        const card = playerCards[playerName];
-        attenderUI.removeChild(playerCards[playerName]);
-        delete playerCards[playerName];
+        if (playerName === this.host) {
+          this.close();
+        } else {
+          const card = playerCards[playerName];
+          attenderUI.removeChild(playerCards[playerName]);
+          delete playerCards[playerName];
+        }
       }
     });
   },
@@ -148,5 +152,13 @@ const RoomPage = {
       UI.setText(this.winnerName, winner);
       UI.show(this.winnerBox);
     });
+  },
+
+  close: function () {
+    alert("Room is closed!");
+    releaseListeners();
+    setTimeout(() => {
+      window.location.href = `index.html`;
+    }, 1000);
   },
 };
