@@ -62,12 +62,13 @@
       const room = params.get("room");
       const host = params.get("host");
       const player = params.get("player");
-      const isHost = host === player;
 
       document.getElementById("room-name").textContent = `${host}'s Room`;
       document.getElementById("room-code").textContent = `Room key: ${room}`;
 
-      RoomPage.init(room, host, isHost);
+      RoomPage.init(room, host, player);
+
+      RoomPage.playerMonitor();
 
       function hostStart() {}
 
@@ -75,6 +76,13 @@
         Game.savePlayerTime(player);
         RoomPage.waitResult();
       }
+
+      listenData(path(KEY_ROOM, room), (snapshot) => {
+        if (!snapshot.exists()) {
+          alert("Room is closed");
+          location.href = "index.html";
+        }
+      });
     </script>
   </body>
 </html>

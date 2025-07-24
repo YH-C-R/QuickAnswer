@@ -32,7 +32,6 @@ window.Room = {
       })
       .then(() => {
         console.log("Room created successfully");
-        getRef(path(KEY_ROOM, room_key, KEY_PLAYER, hostName)).set(true);
         setTimeout(() => {
           window.location.href = `room.html?room=${room_key}&host=${hostName}&player=${hostName}`;
         }, 300);
@@ -61,7 +60,6 @@ window.Room = {
           }
 
           const hostName = snapshot.val();
-          getRef(path(KEY_ROOM, room_key, KEY_PLAYER, name)).set(true);
           setTimeout(() => {
             window.location.href = `room.html?room=${room_key}&host=${hostName}&player=${name}`;
           }, 300);

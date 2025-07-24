@@ -4,7 +4,7 @@ ROLE_PLAYER = "player";
 const RoomPage = {
   room: null, // 新增
   host: null,
-  isHost: false,
+  player: null,
   statusDiv: document.getElementById("game-status"),
   playerBtn: document.getElementById("player-action-btn"),
   winnerBox: document.getElementById("winner"),
@@ -13,12 +13,12 @@ const RoomPage = {
   startButton: document.getElementById("start-button"),
   attenders: document.getElementById("attenders-list"),
 
-  init: function (room, host, isHost) {
+  init: function (room, host, player) {
     this.room = room;
     this.host = host;
-    this.isHost = isHost;
+    this.player = player;
     this.loadAttenders(room, host);
-    if (isHost) {
+    if (host === player) {
       UI.show(this.startButton);
     }
 
@@ -84,6 +84,12 @@ const RoomPage = {
     });
   },
 
+  playerMonitor: function () {
+    const player_ref = getRef(path(KEY_ROOM, this.room, KEY_PLAYER, this.player));
+    player_ref.set(true);
+    player_ref.onDisconnect().set(false);
+  },
+
   startGame: function () {
     Game.start(this.room);
     UI.hide(this.startButton);
@@ -124,7 +130,7 @@ const RoomPage = {
     // Keep spinner for 1 seconds, then show winner/result
     setTimeout(() => {
       RoomPage.showWinner(this.room).then(() => {
-        if (this.isHost) {
+        if (this.player === this.host) {
           UI.show(this.startButton);
         }
       });
