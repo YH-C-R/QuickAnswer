@@ -14,6 +14,8 @@ const EVENT_CHANGE = "change";
 
 // ========== UTILITY FUNCTIONS ========== //
 
+const listenList = [];
+
 // set/update/remove data
 function getRef(path) {
   return firebase.database().ref(path);
@@ -34,6 +36,7 @@ function listenData_child(path, callback) {
   ref.on("child_removed", (snapshot) => {
     callback(EVENT_REMOVE, snapshot);
   });
+  listenList.push(ref);
 }
 
 // listen data's change
@@ -42,6 +45,7 @@ function listenData(path, callback) {
   ref.on("value", (snapshot) => {
     callback(snapshot);
   });
+  listenList.push(ref);
 }
 
 function path(...pathParts) {
@@ -50,4 +54,9 @@ function path(...pathParts) {
 
 function remove(path) {
   getRef(path).remove();
+}
+
+function releaseListeners() {
+  listeners.forEach((ref) => ref.off());
+  refsList.length = 0; // clear list
 }
