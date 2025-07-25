@@ -65,7 +65,7 @@ const RoomPage = {
     attenderUI.appendChild(card);
 
     listenData_child(path(KEY_ROOM, room, KEY_PLAYER), (type, snapshot) => {
-      if (!snapshot.val()) {
+      if (!snapshot.exists()) {
         console.log("fail to get player");
         return;
       }
