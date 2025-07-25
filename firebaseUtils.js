@@ -34,6 +34,7 @@ function listenData_child(path, callback) {
   });
 
   ref.on("child_removed", (snapshot) => {
+    console.log("child_removed triggered:", snapshot.key, snapshot.val());
     callback(EVENT_REMOVE, snapshot);
   });
   listenList.push(ref);

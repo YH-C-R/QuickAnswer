@@ -1,0 +1,11 @@
+{
+  "root": true,
+  "extends": ["eslint:recommended", "google", "prettier"],
+  "env": {
+    "node": true,
+    "es2021": true
+  },
+  "rules": {
+    "max-len": ["error", { "code": 100 }]
+  }
+}
