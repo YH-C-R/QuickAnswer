@@ -58,6 +58,6 @@ function remove(path) {
 }
 
 function releaseListeners() {
-  listeners.forEach((ref) => ref.off());
-  refsList.length = 0; // clear list
+  listenList.forEach((ref) => ref.off());
+  listenList.length = 0; // clear list
 }
