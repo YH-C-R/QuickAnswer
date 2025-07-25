@@ -155,9 +155,9 @@ const RoomPage = {
   },
 
   close: function () {
-    alert("Room is closed!");
     releaseListeners();
     setTimeout(() => {
+      alert("Room is closed!");
       window.location.href = `index.html`;
     }, 1000);
   },
